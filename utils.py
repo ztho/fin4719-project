@@ -720,6 +720,23 @@ def get_all_vr_stats(data, price, k, var_form = 2):
     pval = stats.t.sf(np.abs(t_stat), T - 1)* 2
     return calc_var_ratio(data, price, k), t_stat, pval, T
 
+def test_multiple_periods(data, price,  k_list = [2,4,8,16,32] , var_form = 2):
+    """
+    Function calculates the variance ratio and relevant statistics for a range of k-period values 
+    
+    :param data: time series in dataframe
+    :param price: the name of the index in string 
+    :param k_list: list - the list of k-period return value in integer
+    :param var_form: specify if homoscedastic (1) or heteroscedastic (2). Default 2 in integer 
+    
+    :returns: pd.DataFrame variance ratio and relevent statistics for each k value
+    """
+    out = pd.DataFrame()
+    for k in k_list:
+        vr, stat, pval, T = get_all_vr_stats(data, price, k, var_form)
+        out = out.append({'k': int(k), 'vr': vr, "stat": stat, "pval": pval}, ignore_index = True)
+    return out
+
 # Functions For Calculating Recent Data
 def get_recent_returns(data, ticker, num_days = 7):
     """
@@ -847,12 +864,13 @@ def calc_technical_indicators(hist_prices):
     return output
 
 # Deep Learning Models
-def get_train_test_data(hist_prices, split_frac = .95):
+def get_train_test_data(hist_prices, split_frac = .95, days_forward = 1):
     """
     Function inputs the historical prices and returns the train-test split, together with technical indicators
     
     :param hist_prices: DataFrame containing the historical prices of a stock. Must only have 1 column
     :param split_frac: np.float64 The fraction of data that will be given to assigned as training data. 1 - split_frac = amount of test data
+    :param days_forward: int - number of days in the future the model is supposed to predict, default 1 (next day's price)
     
     :returns: A tuple containing arrays, each array containing the normalized prices for training, technical indicators for training, 
             next day prices for training, prices for testing, and technical indicators for testing, next day prices for testing,
@@ -868,10 +886,15 @@ def get_train_test_data(hist_prices, split_frac = .95):
     prices = hist_prices[hist_prices.index >= ti.index[0]] #using absolute prices
     prices = prices[prices.index >= ti.index[0]] #match shape of our technicals
     
+    
     # normalize the price
     price_normalizer = preprocessing.MinMaxScaler() 
     prices_normalized = price_normalizer.fit_transform(prices)
-    nxt_day_prices_norm = np.roll(prices_normalized, 1)
+    nxt_day_prices_norm = np.roll(prices_normalized, -days_forward)[:-days_forward]
+    
+    # truncate input prices range
+    prices_normalized = prices_normalized[:-days_forward]
+    ti = ti[:-days_forward]
 
     # normalize technical indicators
     ti_normalizer = preprocessing.MinMaxScaler()
@@ -905,16 +928,16 @@ def get_train_test_data(hist_prices, split_frac = .95):
     
     return prices_train, ti_train, nxt_day_prices_train, prices_test, ti_test, nxt_day_prices_test, price_normalizer
 
-def train_LSTM_model(hist_prices, split_frac = 0.95):
+def train_LSTM_model(hist_prices, split_frac = 0.95, days_forward = 1):
     """
     Function inputs historical prices and a split fraction to get the train-test split from get_train_test_split, then
     trains the data on an LSTM model. Returns the trained model
     
     :param hist_prices: DataFrame - containing the historical prices of a stock. Must only have 1 column
     :param split_frac: np.float64 - The fraction of data that will be given to assigned as training data. 1 - split_frac = amount of test data
+    :param days_forward: int - number of days in the future the model is supposed to predict, default 1 (next day's price)
     
     :returns: keras.engine.functional.Functional - The trained LSTM model 
-    
     """
     
     # Get necessary datasets for model training
@@ -946,7 +969,7 @@ def train_LSTM_model(hist_prices, split_frac = 0.95):
     opt = optimizers.Adam(lr = .0005)
     model.compile(optimizer = opt, loss = "mse", metrics = ['mae'])
     callback = tf.keras.callbacks.EarlyStopping(monitor = 'loss', patience = 5)
-    history_callback = model.fit(x = [prices_train, ti_train] , y = nxt_day_prices_train, batch_size = 32, epochs = 100, callbacks = callback)
+    history_callback = model.fit(x = [prices_train, ti_train] , y = nxt_day_prices_train, batch_size = 32, epochs = 100)#, callbacks = callback)
     plt.plot(history_callback.history['loss'])
     
     return model

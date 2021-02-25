@@ -1,7 +1,7 @@
 import streamlit as st
 
 
-def app():
+def app(User):
     st.title("My First App")
 
     # Sidebar https://github.com/antonio-catalano/StockAnalysisApp/blob/master/app.py

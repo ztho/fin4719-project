@@ -26,6 +26,7 @@ def get_stock_data():
     :returns: pd.DataFrame
     """
     sel_stock_data = pd.read_csv("data_files/selected_stock_data.csv").set_index("Date")
+    sel_stock_data = sel_stock_data.astype(np.float64)
     sel_stock_data.index = pd.to_datetime(sel_stock_data.index) # set index to datetime format
     return sel_stock_data
 
@@ -54,6 +55,7 @@ def get_snp():
     gspc = gspc.set_index("Date")
     gspc.index = pd.to_datetime(gspc.index)
     return gspc
+
 # Merge data with dataframe 
 def get_stock_with_benchmarks():
     sel_stock_data = get_stock_data()
