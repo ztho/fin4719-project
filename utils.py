@@ -890,7 +890,7 @@ def get_train_test_data(hist_prices, split_frac = .95, days_forward = 1):
     # normalize the price
     price_normalizer = preprocessing.MinMaxScaler() 
     prices_normalized = price_normalizer.fit_transform(prices)
-    nxt_day_prices_norm = np.roll(prices_normalized, -days_forward)[:-days_forward]
+    nxt_day_prices_norm = np.roll(prices_normalized, -days_forward)[:-days_forward] #days forward to predict
     
     # truncate input prices range
     prices_normalized = prices_normalized[:-days_forward]
@@ -969,7 +969,7 @@ def train_LSTM_model(hist_prices, split_frac = 0.95, days_forward = 1):
     opt = optimizers.Adam(lr = .0005)
     model.compile(optimizer = opt, loss = "mse", metrics = ['mae'])
     callback = tf.keras.callbacks.EarlyStopping(monitor = 'loss', patience = 5)
-    history_callback = model.fit(x = [prices_train, ti_train] , y = nxt_day_prices_train, batch_size = 32, epochs = 100)#, callbacks = callback)
+    history_callback = model.fit(x = [prices_train, ti_train] , y = nxt_day_prices_train, batch_size = 32, epochs = 100, callbacks = callback)
     plt.plot(history_callback.history['loss'])
     
     return model
