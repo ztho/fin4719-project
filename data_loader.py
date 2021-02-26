@@ -66,3 +66,5 @@ def get_stock_with_benchmarks():
     sel_stock_data_with_benchmarks = sel_stock_data_with_benchmarks.merge(us_rf, left_index = True, right_index = True).astype(np.float64)
     return sel_stock_data_with_benchmarks
 
+def get_rel_perf():
+    return pd.read_csv("data_files/rel_perf.csv").set_index("ticker")

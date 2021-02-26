@@ -4,7 +4,6 @@ import pandas as pd
 import math
 import matplotlib.pyplot as plt
 import seaborn as sns
-import yfinance as yf
 
 from scipy.optimize import minimize 
 import scipy.stats as stats
@@ -19,6 +18,7 @@ from sklearn import preprocessing
 from keras.models import Model, Sequential
 from keras.layers import Dense, Dropout, LSTM, Input, Activation, concatenate
 from keras import optimizers
+import keras
 import tensorflow as tf
 
 # Portfolio Optimization Functions 
@@ -300,7 +300,6 @@ def plot_efficient_frontier(n_points, er, cov, rf = 0.03, max_weight = 1.0, styl
         #add CML 
         w_msr = get_max_sharpe_optimal_weights(er, cov, rf, max_weight)
         r_msr = calc_portfolio_return(w_msr, er)
-        vol_msr = calc_portfolio_vol(w_msr, cov)
         cml_x = [0, vol_msr]
         cml_y = [rf, r_msr]
         ax.plot(cml_x, cml_y, color = "green", marker = "o", linestyle = "dashed")
@@ -375,6 +374,8 @@ def get_black_litterman_optimization(hist_prices, covM,
     :param link_matrix: np.array: a 2D array which represents which security outperforms which other security 
     :param tau: np.float64 the value of tau, quantifying the uncertainty of views in Black-Litterman Model 
     "param allow_short_selling": Boolean, True if allowing securities to be shorted. False otherwise
+
+    :returns: np.darray The weight vector of the allocation
     """
     # get implied equilibrum excess returns (pi)
     pi = np.array(get_regression_res(hist_prices, benchmark_col_name, rf_col_name).filter(['alpha'])).flatten()
@@ -395,8 +396,11 @@ def get_black_litterman_optimization(hist_prices, covM,
     omega = tau * (P @ S @ P.T)
 
     # calculate expected return
-    ex1 = np.linalg.inv((np.linalg.inv((tau * S))) + (P.T @ np.linalg.inv(omega) @ P))
-    ex2 = np.linalg.inv(tau * S) @ pi + P.T @ np.linalg.inv(omega) @ Q
+    try:
+        ex1 = np.linalg.inv((np.linalg.inv((tau * S))) + (P.T @ np.linalg.inv(omega) @ P))
+        ex2 = np.linalg.inv(tau * S) @ pi + P.T @ np.linalg.inv(omega) @ Q
+    except:
+        return []
 
     mu_bl = ex1 @ ex2 # expected excess return under black litterman
 
@@ -1012,13 +1016,14 @@ def test_LSTM_model(model, hist_prices, split_frac = 0.95, return_real_prices = 
     else:
         return y_test_predicted, dates
 
-def predict_prices(model, prices_test):
+def predict_prices(model, prices_test, days_forward = None):
     """
     Function inputs the trained model, historical prices to test on and the technical indictors 
     Returns the predicted values of prices 
     
     :param model: keras.engine.functional.Functional - The trained LSTM model 
-    :param prices_test: np.array - prices to test on. 
+    :param prices_test: np.array - prices to test on.
+    :param days_forward: int - Default None - returns all predicted prices, else return only the set number of days  
     
     :returns: np.darray - array containing predicted prices. Array is 2D
     """
@@ -1045,12 +1050,15 @@ def predict_prices(model, prices_test):
     
     y_test_predicted = model.predict([prices_normalized, ti_normalized])
     y_test_predicted = price_normalizer.inverse_transform(y_test_predicted)
-    
+    print(len(y_test_predicted))
+    if isinstance(days_forward,int) and days_forward is not None:
+        if len(y_test_predicted) > days_forward:
+            return y_test_predicted[:days_forward]
     return y_test_predicted
 
 
 ## Black Litterman Model Functions
-def get_expected_returns_from_lstm(model, hist_prices, ticker, lookback_period = 90, data_frequency = 252, annualize = True):
+def get_expected_returns_from_lstm(model, hist_prices, ticker, lookback_period = 90, data_frequency = 252, annualize = True, days_forward = None):
     """
     Function uses a pre-trained model to predict future prices, and returns the mean return rate of the security 
     
@@ -1060,13 +1068,14 @@ def get_expected_returns_from_lstm(model, hist_prices, ticker, lookback_period =
     :param lookback_period: int - the number of days the model should lookback to predict prices, as in predict_prices() 
     :param data_frequency: int - the granularity of the hist_prices. (E.g if daily, use default 252, if monthly, use 12)
     :param annualize: Boolean - Default True to return annualized expected returns. Else return returns of granularity same as hist_prices
+    :param days_forward: int - number of days of prices to predict
     
     :returns: np.float64 - the expected mean returns. 
     """
     
     assert ticker in hist_prices.columns,  "Ticker not found in hist_prices"
     
-    expected_prices = predict_prices(model, hist_prices.filter([ticker]).iloc[-lookback_period:])
+    expected_prices = predict_prices(model, hist_prices.filter([ticker]).iloc[-lookback_period:], days_forward)
     expected_returns = get_returns_from_prices(pd.DataFrame(expected_prices), log_prices = True)
     if annualize:
         mean_ret = get_annualized_returns(expected_returns, data_frequency).values[0]
@@ -1091,13 +1100,12 @@ def get_model_relative_views(ticker_list,
     """
     rel_expected_ret = pd.DataFrame(columns = [ticker])
     # set the ticker's expected returns which we will use to compare with
-    ticker_model = keras.models.load_model("f" + ticker + "_lstm_model.h5")
+    ticker_model = keras.models.load_model("lstm_models/f" + ticker + "_lstm_model.h5")
     ticker_expected_ret = get_expected_returns_from_lstm(ticker_model, hist_prices, ticker, lookback_period, data_frequency, annualize)
-    
     for i in range(len(ticker_list)):
         tick = ticker_list[i]
         # model = model_list[i]
-        model = keras.models.load_model("f" + tick + "_lstm_model.h5")
+        model = keras.models.load_model("lstm_models/f" + tick + "_lstm_model.h5")
         rel_ret = ticker_expected_ret - get_expected_returns_from_lstm(model, hist_prices, tick, lookback_period, data_frequency, annualize) 
         rel_expected_ret = rel_expected_ret.append({ticker: rel_ret}, ignore_index = True)
     
@@ -1117,18 +1125,34 @@ def get_model_views_matrix(ticker_list, hist_prices, lookback_period = 90, data_
     :returns: pd.DataFrame - shape(n, n) where n is the number of securities in ticker_list. Contains the relative performance. 
     positive values imply that the anchor outperformed relative to the ticker in the row, and vice versa
     """
-    views = pd.DataFrame
+    views_matrix = pd.DataFrame
     i = 0 
     for ticker in ticker_list:
         rel_views = get_model_relative_views(ticker_list, 
-                    hist_prices, ticker, lookback_period = 90, data_frequency = 252, annualize = True)
+                    hist_prices, ticker, lookback_period, data_frequency, annualize)
         if i == 0:
             i = 1
-            views = rel_views
+            views_matrix = rel_views
         else:    
-            views = views.merge(rel_views, left_index = True, right_index = True)
+            views_matrix = views_matrix.merge(rel_views, left_index = True, right_index = True)
         
-    return views
+    return views_matrix
+
+def get_model_views_matrix_arc(ticker_list, rel_perf_data):
+    """
+    Function returns the views_matrix as in get_model_views_matrix(), but uses pre-saved data to filter instead of recomputing 
+
+    :params ticker_list: np.array list of ticker symbols in string to be compared against
+    :param rel_perf_data: pd.DataFrame a (n,n) matrix containing the relative outperformance as computed from get_model_views_matrix() on all avail stocks
+
+    :returns: pd.DataFrame - shape(n, n) where n is the number of securities in ticker_list. Contains the relative performance. 
+    positive values imply that the anchor outperformed relative to the ticker in the row, and vice versa
+    """
+    rel_perf_data = rel_perf_data.filter(ticker_list)[rel_perf_data.index.isin(ticker_list)]
+    rel_perf_data = rel_perf_data[rel_perf_data.index] # make sure matrices is square
+
+    return rel_perf_data
+
 
 def get_model_views_and_link_matrices(views_matrix):
     """
