@@ -449,7 +449,8 @@ def run_cppi(weight_alloc,
              init_capital = 1000.,
              floor = 0.8, 
              rf = 0.03,
-             rebal_freq = 6):
+             rebal_freq = 6,
+             months_back = None):
     """
     Simulate CPPI strategy using historical prices.
     
@@ -461,7 +462,7 @@ def run_cppi(weight_alloc,
     :param floor: the fraction of the value of the portfolio that is must not fall under
     :param rf: np.float64 the static risk free rate to use if safe_r is not available. Assumes constant rf throughout simulation
     :param rebal_freq: int - how often to rebalance the portfolio 
-    
+    :param months_back: int - specify how long ago the backtest should start (eg. 6 means start the backtest 6 months ago)
     :returns: A tuple containing 2 dataframes, sim: the backtested historical portfolio value, 
                                             hist: the historical value of the individual holdings
     """
@@ -470,6 +471,14 @@ def run_cppi(weight_alloc,
     
     pct_change = hist_data.pct_change().dropna() + 1
     
+    d = pct_change.index.max()
+    if months_back is not None:
+        try:
+            d = d + pd.DateOffset(months = - months_back)
+            pct_change = pct_change.loc[pct_change.index >= d]
+        except:
+            pass 
+
     # Set up CPPI parameters
     risky_capital = (1-floor) * init_capital * m #capital you are willing to risk
     floor_value = floor * init_capital #this is if it breaks this floor value, it is not the floor amount!
@@ -988,8 +997,10 @@ def test_LSTM_model(model, hist_prices, split_frac = 0.95, return_real_prices = 
     :param split_frac: np.float64 - The fraction of data that will be given to assigned as training data. 1 - split_frac = amount of test data
     :param return_real_prices: Boolean - Default False to only return the predicted prices. True to return a tuple (predicted_prices, real_prices)
 
-    :returns: if return_real_prices False - tuple (np.darray, pd.DataFrame) list - array containing predicted prices. Array is 2D. 
-              if return_real_prices True - tuple (np.darray, np.darray, pd.DataFrame)- 3 elements, each are 2D np.darray (predicted_prices, real_prices).
+    :returns: if return_real_prices False - tuple (np.darray, pd.DataFrame, np.float64) - containing predicted prices, Array is 2D,
+                                            pd.DataFrame containing dates of the predicted values, and np.float64 the MeanAbsolutePercentageError
+              if return_real_prices True - tuple (np.darray, np.darray, pd.DataFrame, np.float64)- 4 elements, 2 are 2D np.darray (predicted_prices, real_prices), 
+                                            1 pd.DataFrame containing dates of the predicted values, and np.float64 the MeanAbsolutePercentageError
     """
     n = int(split_frac * hist_prices.shape[0]) 
     test_dataset = hist_prices[n-1: ]
@@ -1010,11 +1021,12 @@ def test_LSTM_model(model, hist_prices, split_frac = 0.95, return_real_prices = 
     # pred = plt.plot(y_test_predicted, label = "Predicted")
     # plt.legend(["Real", "Predicted"])
     # plt.show()
+    mape = tf.keras.losses.MeanAbsolutePercentageError()(y_test_real, y_test_predicted).numpy()
     
     if return_real_prices:
-        return y_test_predicted, y_test_real, dates
+        return y_test_predicted, y_test_real, dates, mape
     else:
-        return y_test_predicted, dates
+        return y_test_predicted, dates, mape
 
 def predict_prices(model, prices_test, days_forward = None):
     """
@@ -1050,7 +1062,7 @@ def predict_prices(model, prices_test, days_forward = None):
     
     y_test_predicted = model.predict([prices_normalized, ti_normalized])
     y_test_predicted = price_normalizer.inverse_transform(y_test_predicted)
-    print(len(y_test_predicted))
+    # print(len(y_test_predicted))
     if isinstance(days_forward,int) and days_forward is not None:
         if len(y_test_predicted) > days_forward:
             return y_test_predicted[:days_forward]

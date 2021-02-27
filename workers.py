@@ -2,20 +2,19 @@ import streamlit as st
 
 import numpy as np 
 import pandas as pd 
-
+from datetime import timedelta
 import data_loader as data 
 from utils import *
 import user_state as u
+from datetime import date
 
+from bokeh.io import curdoc
 from bokeh.layouts import gridplot
-from bokeh.plotting import figure
+from bokeh.plotting import figure, reset_output
 from bokeh.models import ColumnDataSource, NumeralTickFormatter, HoverTool
-# from bokeh.plotting import figure, output_file, show
-# from bokeh.models import ColumnDataSource
-# from bokeh.models.tools import HoverTool
-# from bokeh.layouts import gridplot
 from bokeh.palettes import Spectral3
 
+curdoc().theme ='dark_minimal'
 
 def show_vr_stats(data, price, k_list, var_form, pval_thres = .05):
     vr_df = test_multiple_periods(data, price, k_list, var_form).drop(columns = ["stat"])
@@ -61,8 +60,8 @@ def show_historical_prices_plot(df_ticker):
         df_ticker = df_ticker.loc[df_ticker.index >= d]
     except ValueError:
         df_ticker = df_ticker
-
-    p = figure(x_axis_type='datetime', height = 300, tools = "reset, save")
+    curdoc().theme = "dark_minimal"
+    p = figure(x_axis_type='datetime', height = 250, tools = "reset, save")
     p.sizing_mode = "scale_width"
     p.grid.grid_line_alpha = 0
     p.xaxis.axis_label = 'Date'
@@ -72,7 +71,7 @@ def show_historical_prices_plot(df_ticker):
     # p.ygrid.band_fill_alpha = 0.1
     p.yaxis.formatter = NumeralTickFormatter(format="$0,0")
     
-    p.line(np.array(df_ticker.index, dtype=np.datetime64), df_ticker[df_ticker.columns[0]], color='darkslateblue')
+    p.line(np.array(df_ticker.index, dtype=np.datetime64), df_ticker[df_ticker.columns[0]], line_width = 1.5,color='#7564ff')
     
     p.add_tools(HoverTool(tooltips=[('Date', '$x{%F}'),
                                     ('Price', '$$y{0,0.00}')],
@@ -92,14 +91,14 @@ def show_model_performance_plot(hist_prices, y_test_pred, y_test_real, dates, sp
     plot_frame["Date"] = pd.to_datetime(plot_frame['Date'])
 
     source = ColumnDataSource(plot_frame)
-    p = figure(x_axis_type='datetime', height = 300, tools = "reset, save")
+    p = figure(x_axis_type='datetime', height = 200, tools = "reset, save")
     p.sizing_mode = "scale_width"
     p.grid.grid_line_alpha = 0
     p.yaxis.minor_tick_line_color = None 
     p.yaxis.formatter = NumeralTickFormatter(format="$0,0")
 
-    p.line(x='Date', y='real', line_width=2, source=source, legend_label = 'Real prices',color=Spectral3[2])
-    p.line(x='Date', y='pred', line_width=2, source=source, legend_label = 'Predicted prices')
+    p.line(x='Date', y='real', line_width=1, source=source, legend_label = 'Real prices',color="#7564ff")
+    p.line(x='Date', y='pred', line_width=1, source=source, legend_label = 'Predicted prices', color = "#1ae0ff")
     p.yaxis.axis_label = 'Prices'
     
     # hover tool tips 
@@ -117,15 +116,26 @@ def show_model_performance_plot(hist_prices, y_test_pred, y_test_real, dates, sp
     return p
 
 
-def show_future_expected_returns(model, df_ticker, ticker, lookback_period = 90, data_frequency = 252, annualize = True, days_forward = None): 
-    expected_ret = get_expected_returns_from_lstm(model, df_ticker, ticker,
-                                                 lookback_period = lookback_period, 
-                                                 data_frequency = data_frequency,
-                                                 annualize = annualize,
-                                                 days_forward= days_forward)
-    #print(expected_ret)
-    ret_form = str(round(expected_ret * 100, 1)) + "%"
+# def show_future_expected_returns(model, df_ticker, ticker, lookback_period = 90, data_frequency = 252, annualize = True, days_forward = None): 
+#     expected_ret = get_expected_returns_from_lstm(model, df_ticker, ticker,
+#                                                  lookback_period = lookback_period, 
+#                                                  data_frequency = data_frequency,
+#                                                  annualize = annualize,
+#                                                  days_forward= days_forward)
+#     #print(expected_ret)
+#     ret_form = str(round(expected_ret * 100, 1)) + "%"
+#     return ret_form
+def show_future_expected_returns(pred_prices, days_forward):
+    if days_forward > len(pred_prices):
+        days_forward = len(pred_prices)
+    prices = pd.DataFrame(pred_prices)
+    start_price = prices.iloc[0].values[0]
+    end_price = prices.iloc[days_forward - 1].values[0]
+
+    exp_ret = (end_price - start_price)/start_price
+    ret_form = str(round(exp_ret * 100, 1)) + "%"
     return ret_form
+    
 
 def show_future_expected_vols(pred_prices, days_forward):
     vols = pd.DataFrame(pred_prices)[:days_forward].pct_change().std()[0]
@@ -137,10 +147,33 @@ def show_num_days_predicted(pred_prices, days_forward):
         return "- " + str(len(pred_prices)) + " Days (Max)" 
     return "- " + str(len(pred_prices)) + " Days"
 
+def show_predicted_prices_plot(pred_prices, hist_data):
+    num_days = len(pred_prices)
+    last_day = hist_data.index.max() 
+
+    df_pred_prices = pd.DataFrame(pred_prices, columns = ["pred_prices"])
+    dates = [last_day + timedelta(days = i) for i in range(num_days)]
+    df_pred_prices.index = dates
+
+    pred_plot = figure(x_axis_type='datetime', height = 200, tools = "")
+    pred_plot.sizing_mode = "scale_width"
+    pred_plot.grid.grid_line_alpha = 0
+    pred_plot.yaxis.minor_tick_line_color = None 
+    pred_plot.yaxis.formatter = NumeralTickFormatter(format="$0,0")
+    
+    pred_plot.line(np.array(df_pred_prices.index, dtype=np.datetime64), df_pred_prices[df_pred_prices.columns[0]], color='#1ae0ff')
+    
+    pred_plot.add_tools(HoverTool(tooltips=[('Date', '$x{%F}'),
+                                    ('Price', '$$y{0,0.00}')],
+                        formatters={'$x': 'datetime'},  #using 'datetime' formatter for 'Date' field
+                        mode='vline')) #display a tooltip whenever the cursor is vertically in line with a glyph
+    return pred_plot
+
+
 def exec_get_black_litterman_optimal_weights(ticker_list, hist_prices, rel_perf_data):
     if len(ticker_list) >= 2: 
         views_matrix = get_model_views_matrix_arc(ticker_list, rel_perf_data)
-        print(views_matrix)
+        # print(views_matrix)
         views, links = get_model_views_and_link_matrices(views_matrix)
         
         gspc = data.get_snp()
@@ -179,6 +212,14 @@ def show_portfolio_returns(opt_weights, hist_prices, ticker_list):
     else:
         return "Not Applicable"
 
+def show_portfolio_returns2(sim):
+    if sim is not None:
+        rets = sim.pct_change().dropna().values.mean()
+        rets_form = str(round(rets * 100, 5)) + "%"
+        return rets_form
+    else:
+        return "Not Applicable"
+
 def show_portfolio_vols(opt_weights, hist_prices, ticker_list):
     if opt_weights is None: return None
     if (len(opt_weights) >= 2):
@@ -190,22 +231,105 @@ def show_portfolio_vols(opt_weights, hist_prices, ticker_list):
     else:
         return "Not Applicable"
 
-def exec_run_cppi(opt_weights, hist_data, ticker_list):
+def exec_run_cppi(opt_weights, hist_data, ticker_list, months_back = None):
     if opt_weights is not None and len(opt_weights) != 0:
         hist_data_sel = hist_data.filter(ticker_list)
-        print(hist_data_sel.shape[1])
-        print(len(opt_weights))
-        sim, hist = run_cppi(opt_weights, hist_data_sel, m = 2, floor = 0.5, rf = .03, rebal_freq = 100000)
+        # print(hist_data_sel.shape[1])
+        # print(len(opt_weights))
+        sim, hist = run_cppi(opt_weights, hist_data_sel, m = 2, floor = 0.5, rf = .03, rebal_freq = 100000, months_back = months_back)
         return sim 
 
-def exec_simulate_gbm(sim, days_sim, init_cap, rf):
+def exec_simulate_gbm(sim, days_sim, init_cap, rf, freq = 252, risk_level =.05):
     if sim is not None:
         sigma = sim.pct_change().dropna().values.std()
-        sim_gbm = simulate_gbm(T = days_sim, S_0 = init_cap, rf = rf, sig = sigma, M = days_sim, num_sim = 1000)
+        # print("Sigma " + str (sigma))
+        sim_gbm = simulate_gbm(T = days_sim, S_0 = init_cap, rf = rf/freq, sig = sigma, M = days_sim, num_sim = 1000)
         gbm_res = get_sim_results_stats(sim_gbm)
-        var_risk = gbm_res.filter(['end_asset_value']).quantile(.05).values[0]
-        return var_risk
+        var_risk = gbm_res.filter(['net_asset_change']).quantile(risk_level).values[0]
+        return sim_gbm, var_risk
+    return None, None
 
-def show_VaR(sim, days_sim, init_cap, rf):
-    if sim is not None:
-        return exec_simulate_gbm(sim, days_sim, init_cap, rf)
+def show_formatted_VaR(var_risk):
+    if var_risk is not None:
+        var_form =  str(round(var_risk * 100, 2)) + "%"
+        return var_form
+    return "Not Applicable"
+
+def show_is_profitable(gbm_sim):
+    if gbm_sim is not None:
+        gbm_res = get_sim_results_stats(gbm_sim)
+        num_profit = len(gbm_res[gbm_res['is_profitable'] == True])
+        # print(num_profit)
+        perc = str(round((num_profit / len(gbm_res)) * 100, 3)) + "%"
+        return perc
+    else:
+        return "Not Applicable"
+
+
+def show_portfolio_backtest_plot(sim):
+
+    p = figure(x_axis_type='datetime', height = 200, tools = "reset, save")
+    p.grid.grid_line_alpha = 0
+    p.xaxis.axis_label = 'Date'
+    p.yaxis.axis_label = 'Indicative Value'
+    p.ygrid.band_fill_color = None
+    p.ygrid.band_fill_alpha = 0
+    p.yaxis.formatter = NumeralTickFormatter(format="$0,0") 
+    
+    p.line(np.array(sim.index, dtype=np.datetime64), sim['Portfolio Value'], line_width = 2, color='#7564ff')
+    p.sizing_mode = "scale_width"
+    p.yaxis.minor_tick_line_color = None 
+    p.add_tools(HoverTool(tooltips=[('Date', '$x{%F}'),
+                                    ('Price', '$$y{0,0.00}')],
+                        formatters={'$x': 'datetime'},  #using 'datetime' formatter for 'Date' field
+                        mode='vline')) #display a tooltip whenever the cursor is vertically in line with a glyph
+    return p
+
+def show_portfolio_future_plot(gbm_sim, init_cap, days_sim, hist_data):
+    if gbm_sim is not None:
+
+        last_day = hist_data.index.max() 
+        dates = [last_day + timedelta(days = i) for i in range(days_sim)]
+
+        sim_res = get_sim_results_stats(gbm_sim)
+        
+        bottom = sim_res.filter(['net_asset_change']).quantile(.05) / len(gbm_sim) #arithmetic average daily returns
+        middle = sim_res.filter(['net_asset_change']).quantile(.5) / len(gbm_sim)
+        top = sim_res.filter(['net_asset_change']).quantile(.95) / len(gbm_sim)
+
+        # print(bottom)
+
+        bottom_ind_value = init_cap * np.cumprod([1 + bottom] * days_sim)
+        middle_ind_value = init_cap * np.cumprod([1 + middle] * days_sim)
+        top_ind_value = init_cap * np.cumprod([1 + top] * days_sim)
+
+        # ind_value = pd.DataFrame(data = {"bottom": bottom_ind_value, 
+        #                                 "middle": middle_ind_value, 
+        #                                 "top": top_ind_value})
+
+        plot_proj = figure(x_axis_type='datetime', height = 250, tools = "reset, save")
+        plot_proj.sizing_mode = "scale_width"
+        plot_proj.grid.grid_line_alpha = 0
+        plot_proj.xaxis.axis_label = 'Date'
+        plot_proj.yaxis.axis_label = 'Indicative Value'
+        plot_proj.ygrid.band_fill_color = None
+        plot_proj.ygrid.band_fill_alpha = 0
+        plot_proj.yaxis.formatter = NumeralTickFormatter(format="$0,0")
+        plot_proj.xaxis.minor_tick_line_color = None
+
+        plot_proj.line(dates, bottom_ind_value, color='#006565',
+                        legend_label = '5th Percentile', line_width = 1.5)
+        plot_proj.line(dates, middle_ind_value, color='#008c8c',
+                        legend_label = '50th Percentile', line_width = 1.5)
+        plot_proj.line(dates, top_ind_value, color='#00eeee',
+                        legend_label = '95% Percentile', line_width = 1.5)
+
+        hover = HoverTool(tooltips=[('Date','$x{%F}'),
+                                ('Indicative Value', '$$y{0,0.00}')])
+        hover.mode = 'vline'
+
+        plot_proj.add_tools(hover) 
+
+        
+        return plot_proj 
+

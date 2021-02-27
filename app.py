@@ -1,6 +1,6 @@
 import streamlit as st 
-import tech_anal_page as app2
-import port_mgt_page as app1
+import tech_anal_page as app1
+import port_mgt_page as app2
 import numpy as np 
 import pandas as pd 
 import data_loader as data 
@@ -22,7 +22,7 @@ from bokeh.plotting import figure
 st.set_page_config(layout="wide")
 
 def main():
-    PAGES = {"Portfolio Management": app1, "Technical Analysis": app2}
+    PAGES = {"Technical Analysis": app1, "Portfolio Management": app2}
     st.sidebar.title('Navigation')
     selection = st.sidebar.selectbox("Go to", list(PAGES.keys()))
     page = PAGES[selection]
