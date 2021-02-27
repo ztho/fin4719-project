@@ -17,9 +17,8 @@ import statsmodels.api as sm
 from sklearn import preprocessing
 from keras.models import Model, Sequential
 from keras.layers import Dense, Dropout, LSTM, Input, Activation, concatenate
-from keras import optimizers
-import keras
-import tensorflow as tf
+from keras import optimizers, callbacks, losses, models
+
 
 # Portfolio Optimization Functions 
 
@@ -981,7 +980,7 @@ def train_LSTM_model(hist_prices, split_frac = 0.95, days_forward = 1):
     
     opt = optimizers.Adam(lr = .0005)
     model.compile(optimizer = opt, loss = "mse", metrics = ['mae'])
-    callback = tf.keras.callbacks.EarlyStopping(monitor = 'loss', patience = 5)
+    callback = callbacks.EarlyStopping(monitor = 'loss', patience = 5)
     history_callback = model.fit(x = [prices_train, ti_train] , y = nxt_day_prices_train, batch_size = 32, epochs = 100, callbacks = callback)
     plt.plot(history_callback.history['loss'])
     
@@ -1021,7 +1020,7 @@ def test_LSTM_model(model, hist_prices, split_frac = 0.95, return_real_prices = 
     # pred = plt.plot(y_test_predicted, label = "Predicted")
     # plt.legend(["Real", "Predicted"])
     # plt.show()
-    mape = tf.keras.losses.MeanAbsolutePercentageError()(y_test_real, y_test_predicted).numpy()
+    mape = losses.MeanAbsolutePercentageError()(y_test_real, y_test_predicted).numpy()
     
     if return_real_prices:
         return y_test_predicted, y_test_real, dates, mape
@@ -1112,12 +1111,12 @@ def get_model_relative_views(ticker_list,
     """
     rel_expected_ret = pd.DataFrame(columns = [ticker])
     # set the ticker's expected returns which we will use to compare with
-    ticker_model = keras.models.load_model("lstm_models/f" + ticker + "_lstm_model.h5")
+    ticker_model = models.load_model("lstm_models/f" + ticker + "_lstm_model.h5")
     ticker_expected_ret = get_expected_returns_from_lstm(ticker_model, hist_prices, ticker, lookback_period, data_frequency, annualize)
     for i in range(len(ticker_list)):
         tick = ticker_list[i]
         # model = model_list[i]
-        model = keras.models.load_model("lstm_models/f" + tick + "_lstm_model.h5")
+        model = models.load_model("lstm_models/f" + tick + "_lstm_model.h5")
         rel_ret = ticker_expected_ret - get_expected_returns_from_lstm(model, hist_prices, tick, lookback_period, data_frequency, annualize) 
         rel_expected_ret = rel_expected_ret.append({ticker: rel_ret}, ignore_index = True)
     
