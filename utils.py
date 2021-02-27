@@ -18,8 +18,12 @@ from sklearn import preprocessing
 from keras.models import Model, Sequential
 from keras.layers import Dense, Dropout, LSTM, Input, Activation, concatenate
 from keras import optimizers, callbacks, losses, models
-import tensorflow-cpu as tf
+import tensorflow as tf
 
+config = tf.compat.v1.ConfigProto( #set not to use gpu
+        device_count = {'GPU': 0}
+    )
+sess = tf.compat.v1.Session(config=config)
 
 # Portfolio Optimization Functions 
 
