@@ -18,7 +18,7 @@ from sklearn import preprocessing
 from keras.models import Model, Sequential
 from keras.layers import Dense, Dropout, LSTM, Input, Activation, concatenate
 from keras import optimizers, callbacks, losses, models
-import tensorflow as tf
+import tensorflow-cpu as tf
 
 
 # Portfolio Optimization Functions 
