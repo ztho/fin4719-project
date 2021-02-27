@@ -243,7 +243,7 @@ def exec_simulate_gbm(sim, days_sim, init_cap, rf, freq = 252, risk_level =.05):
     if sim is not None:
         sigma = sim.pct_change().dropna().values.std()
         # print("Sigma " + str (sigma))
-        sim_gbm = simulate_gbm(T = days_sim, S_0 = init_cap, rf = rf/freq, sig = sigma, M = days_sim, num_sim = 1000)
+        sim_gbm = simulate_gbm(T = days_sim, S_0 = init_cap, rf = rf/freq, sig = sigma, M = days_sim, num_sim = 100)
         gbm_res = get_sim_results_stats(sim_gbm)
         var_risk = gbm_res.filter(['net_asset_change']).quantile(risk_level).values[0]
         return sim_gbm, var_risk

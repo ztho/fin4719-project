@@ -1,6 +1,7 @@
 # Module to load data 
 import pandas as pd
 import numpy as np 
+from datetime import timedelta
 
 # Prepare etf data for portfolio optimization
 def get_etf_data():
@@ -68,3 +69,30 @@ def get_stock_with_benchmarks():
 
 def get_rel_perf():
     return pd.read_csv("data_files/rel_perf.csv").set_index("ticker")
+
+def get_model_test_results(ticker):
+    res = pd.read_csv("data_files/model_valid_results/" + ticker + "_pred_real_prices.csv")
+    res = res.set_index("Date")
+    res = res.astype(np.float)
+    res.index = pd.to_datetime(res.index)  
+    mapes = pd.read_csv("data_files/model_valid_results/mapes.csv")
+
+    y_test_pred = np.array(res[ticker+'_pred']) 
+    y_test_real = np.array(res[ticker+'_real'])
+    dates = res.index 
+    mape = mapes[mapes.ticker == ticker].values[0][1]
+
+    return y_test_pred, y_test_real, dates, mape
+
+def get_model_pred_fut_prices(ticker, hist_data):
+    res = pd.read_csv("data_files/model_pred_fut_prices/" + ticker + "_pred_fut_prices.csv")
+    res = res.drop(columns =["Date"])
+    
+    y_pred = np.array(res[ticker + "_fut_pred"])
+
+    num_days = len(res)
+    last_day = hist_data.index.max()
+
+    # dates = [last_day + timedelta(days = i) for i in range(num_days)]
+
+    return y_pred
