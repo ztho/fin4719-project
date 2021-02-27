@@ -303,10 +303,19 @@ def show_portfolio_future_plot(gbm_sim, init_cap, days_sim, hist_data):
         middle_ind_value = init_cap * np.cumprod([1 + middle] * days_sim)
         top_ind_value = init_cap * np.cumprod([1 + top] * days_sim)
 
-        # ind_value = pd.DataFrame(data = {"bottom": bottom_ind_value, 
-        #                                 "middle": middle_ind_value, 
-        #                                 "top": top_ind_value})
-
+        ind_value = pd.DataFrame(data = {"bottom": bottom_ind_value, 
+                                        "middle": middle_ind_value, 
+                                        "top": top_ind_value})
+        # ind_value.index = dates
+        # source = ColumnDataSource(data = {
+        #     "date": np.array(dates),
+        #     "5_p" : bottom_ind_value,
+        #     "50_p": middle_ind_value,
+        #     "95_p": top_ind_value,
+        #     "xs":  [dates] * len(ind_value.columns),
+        #     "ys": [ind_value[perc].values for perc in ind_value.columns],
+        #     "color": ["#006565", "#008c8c", "#00eeee"],
+        # })
         plot_proj = figure(x_axis_type='datetime', height = 250, tools = "reset, save")
         plot_proj.sizing_mode = "scale_width"
         plot_proj.grid.grid_line_alpha = 0
@@ -317,15 +326,21 @@ def show_portfolio_future_plot(gbm_sim, init_cap, days_sim, hist_data):
         plot_proj.yaxis.formatter = NumeralTickFormatter(format="$0,0")
         plot_proj.xaxis.minor_tick_line_color = None
 
-        plot_proj.line(dates, bottom_ind_value, color='#006565',
+        r1 = plot_proj.line(dates, bottom_ind_value, color='#006565',
                         legend_label = '5th Percentile', line_width = 1.5)
-        plot_proj.line(dates, middle_ind_value, color='#008c8c',
+        r2 = plot_proj.line(dates, middle_ind_value, color='#008c8c',
                         legend_label = '50th Percentile', line_width = 1.5)
-        plot_proj.line(dates, top_ind_value, color='#00eeee',
+        r3 = plot_proj.line(dates, top_ind_value, color='#00eeee',
                         legend_label = '95% Percentile', line_width = 1.5)
-
-        hover = HoverTool(tooltips=[('Date','$x{%F}'),
-                                ('Indicative Value', '$$y{0,0.00}')])
+        # print([ind_value[perc].values for perc in ind_value.columns])
+        # r2 =plot_proj.multi_line(xs = [dates] * len(ind_value.columns), ys = [ind_value[perc].values for perc in ind_value.columns], line_width = 2, color = "#00eeee")
+        # plot_proj.multi_line(xs = "xs", ys = "ys", line_width = 2, color = "color", source = source)
+        hover = HoverTool(tooltips=[('Date','@dates{%F}'),
+                                ('Indicative Value, r1', '$@bottom_ind_value'),
+                                ('Indicative Value, r2', '$@middle_ind_value'),
+                                ('Indicative Value, r3', '$@top_ind_value')],
+                            formatters={"@dates": "datetime"})
+        hover.renderers = [r2]
         hover.mode = 'vline'
 
         plot_proj.add_tools(hover) 

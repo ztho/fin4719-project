@@ -1,7 +1,7 @@
 import streamlit as st
 import data_loader as data 
 import utils
-import keras
+# import keras
 import pandas as pd 
 import workers as workers
 import actions
@@ -29,7 +29,7 @@ def app(tar_stocks):
             # st.line_chart(df_ticker)
 
             # AI - Prediction - Dynamic
-            model = keras.models.load_model("lstm_models/f"+ ticker + "_lstm_model.h5")
+            # model = keras.models.load_model("lstm_models/f"+ ticker + "_lstm_model.h5")
             # y_test_pred, y_test_real, dates, mape = utils.test_LSTM_model(model, df_ticker, split_frac = 0.95, return_real_prices = True)
             # pred_prices = utils.predict_prices(model,df_ticker[-days_lookback_pred:], days_forward)
 

@@ -90,8 +90,8 @@ def get_model_pred_fut_prices(ticker, hist_data):
     
     y_pred = np.array(res[ticker + "_fut_pred"])
 
-    num_days = len(res)
-    last_day = hist_data.index.max()
+    # num_days = len(res)
+    # last_day = hist_data.index.max()
 
     # dates = [last_day + timedelta(days = i) for i in range(num_days)]
 

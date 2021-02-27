@@ -15,15 +15,15 @@ from statsmodels.tools.tools import add_constant
 import statsmodels.api as sm 
 
 from sklearn import preprocessing
-from keras.models import Model, Sequential
-from keras.layers import Dense, Dropout, LSTM, Input, Activation, concatenate
-from keras import optimizers, callbacks, losses, models
-import tensorflow as tf
+# from keras.models import Model, Sequential
+# from keras.layers import Dense, Dropout, LSTM, Input, Activation, concatenate
+# from keras import optimizers, callbacks, losses, models
+# import tensorflow as tf
 
-config = tf.compat.v1.ConfigProto( #set not to use gpu
-        device_count = {'GPU': 0}
-    )
-sess = tf.compat.v1.Session(config=config)
+# config = tf.compat.v1.ConfigProto( #set not to use gpu
+#         device_count = {'GPU': 0}
+#     )
+# sess = tf.compat.v1.Session(config=config)
 
 # Portfolio Optimization Functions 
 
@@ -945,214 +945,214 @@ def get_train_test_data(hist_prices, split_frac = .95, days_forward = 1):
     
     return prices_train, ti_train, nxt_day_prices_train, prices_test, ti_test, nxt_day_prices_test, price_normalizer
 
-def train_LSTM_model(hist_prices, split_frac = 0.95, days_forward = 1):
-    """
-    Function inputs historical prices and a split fraction to get the train-test split from get_train_test_split, then
-    trains the data on an LSTM model. Returns the trained model
+# def train_LSTM_model(hist_prices, split_frac = 0.95, days_forward = 1):
+#     """
+#     Function inputs historical prices and a split fraction to get the train-test split from get_train_test_split, then
+#     trains the data on an LSTM model. Returns the trained model
     
-    :param hist_prices: DataFrame - containing the historical prices of a stock. Must only have 1 column
-    :param split_frac: np.float64 - The fraction of data that will be given to assigned as training data. 1 - split_frac = amount of test data
-    :param days_forward: int - number of days in the future the model is supposed to predict, default 1 (next day's price)
+#     :param hist_prices: DataFrame - containing the historical prices of a stock. Must only have 1 column
+#     :param split_frac: np.float64 - The fraction of data that will be given to assigned as training data. 1 - split_frac = amount of test data
+#     :param days_forward: int - number of days in the future the model is supposed to predict, default 1 (next day's price)
     
-    :returns: keras.engine.functional.Functional - The trained LSTM model 
-    """
+#     :returns: keras.engine.functional.Functional - The trained LSTM model 
+#     """
     
-    # Get necessary datasets for model training
-    prices_train, ti_train, nxt_day_prices_train, prices_test, ti_test, nxt_day_prices_test, price_normalizer = get_train_test_data(hist_prices, split_frac)
+#     # Get necessary datasets for model training
+#     prices_train, ti_train, nxt_day_prices_train, prices_test, ti_test, nxt_day_prices_test, price_normalizer = get_train_test_data(hist_prices, split_frac)
     
-    # Tensor input
-    prices_input = Input(shape = (prices_train.shape[1], prices_train.shape[2]))
-    ti_input = Input(shape = (ti_train.shape[1], ))
+#     # Tensor input
+#     prices_input = Input(shape = (prices_train.shape[1], prices_train.shape[2]))
+#     ti_input = Input(shape = (ti_train.shape[1], ))
     
     
-    # Specify LSTM branch - use time series data
-    x = LSTM(32, return_sequences = False)(prices_input)
-    x = Dropout(.2)(x)
-    lstm_branch = Model(inputs = prices_input, outputs = x)
+#     # Specify LSTM branch - use time series data
+#     x = LSTM(32, return_sequences = False)(prices_input)
+#     x = Dropout(.2)(x)
+#     lstm_branch = Model(inputs = prices_input, outputs = x)
     
-    # Specify Dense branch - use technical data 
-    # Note: This was done after tuning, performance better than using LSTM
-    x2 = Dense(32)(ti_input)
-    x2 = Dropout(.2)(x2)
-    ti_branch = Model(inputs = ti_input, outputs = x2)
+#     # Specify Dense branch - use technical data 
+#     # Note: This was done after tuning, performance better than using LSTM
+#     x2 = Dense(32)(ti_input)
+#     x2 = Dropout(.2)(x2)
+#     ti_branch = Model(inputs = ti_input, outputs = x2)
     
-    # Combine both branches
-    combined_model = concatenate([lstm_branch.output, ti_branch.output])
-    x3 = Dense(64, activation = 'sigmoid')(combined_model) # Compile with sigmoid function
-    x3 = Dense(1, activation = "linear")(x3) # Prediction
+#     # Combine both branches
+#     combined_model = concatenate([lstm_branch.output, ti_branch.output])
+#     x3 = Dense(64, activation = 'sigmoid')(combined_model) # Compile with sigmoid function
+#     x3 = Dense(1, activation = "linear")(x3) # Prediction
 
-    model = Model(inputs = [lstm_branch.input, ti_branch.input], outputs = x3)
+#     model = Model(inputs = [lstm_branch.input, ti_branch.input], outputs = x3)
     
-    opt = optimizers.Adam(lr = .0005)
-    model.compile(optimizer = opt, loss = "mse", metrics = ['mae'])
-    callback = callbacks.EarlyStopping(monitor = 'loss', patience = 5)
-    history_callback = model.fit(x = [prices_train, ti_train] , y = nxt_day_prices_train, batch_size = 32, epochs = 100, callbacks = callback)
-    plt.plot(history_callback.history['loss'])
+#     opt = optimizers.Adam(lr = .0005)
+#     model.compile(optimizer = opt, loss = "mse", metrics = ['mae'])
+#     callback = callbacks.EarlyStopping(monitor = 'loss', patience = 5)
+#     history_callback = model.fit(x = [prices_train, ti_train] , y = nxt_day_prices_train, batch_size = 32, epochs = 100, callbacks = callback)
+#     plt.plot(history_callback.history['loss'])
     
-    return model
+#     return model
 
-def test_LSTM_model(model, hist_prices, split_frac = 0.95, return_real_prices = False):
-    """
-    Function inputs the trained model, historical prices and a split fraction to get the train-test split from get_train_test_split, then
-    trains the data on an LSTM model. Returns the predicted prices
+# def test_LSTM_model(model, hist_prices, split_frac = 0.95, return_real_prices = False):
+#     """
+#     Function inputs the trained model, historical prices and a split fraction to get the train-test split from get_train_test_split, then
+#     trains the data on an LSTM model. Returns the predicted prices
     
-    :param model: keras.engine.functional.Functional - The trained LSTM model 
-    :param hist_prices: DataFrame - containing the historical prices of a stock. Must only have 1 column
-    :param split_frac: np.float64 - The fraction of data that will be given to assigned as training data. 1 - split_frac = amount of test data
-    :param return_real_prices: Boolean - Default False to only return the predicted prices. True to return a tuple (predicted_prices, real_prices)
+#     :param model: keras.engine.functional.Functional - The trained LSTM model 
+#     :param hist_prices: DataFrame - containing the historical prices of a stock. Must only have 1 column
+#     :param split_frac: np.float64 - The fraction of data that will be given to assigned as training data. 1 - split_frac = amount of test data
+#     :param return_real_prices: Boolean - Default False to only return the predicted prices. True to return a tuple (predicted_prices, real_prices)
 
-    :returns: if return_real_prices False - tuple (np.darray, pd.DataFrame, np.float64) - containing predicted prices, Array is 2D,
-                                            pd.DataFrame containing dates of the predicted values, and np.float64 the MeanAbsolutePercentageError
-              if return_real_prices True - tuple (np.darray, np.darray, pd.DataFrame, np.float64)- 4 elements, 2 are 2D np.darray (predicted_prices, real_prices), 
-                                            1 pd.DataFrame containing dates of the predicted values, and np.float64 the MeanAbsolutePercentageError
-    """
-    n = int(split_frac * hist_prices.shape[0]) 
-    test_dataset = hist_prices[n-1: ]
-    test_dataset = test_dataset.reset_index()
-    dates = test_dataset.iloc[:,[0]]
+#     :returns: if return_real_prices False - tuple (np.darray, pd.DataFrame, np.float64) - containing predicted prices, Array is 2D,
+#                                             pd.DataFrame containing dates of the predicted values, and np.float64 the MeanAbsolutePercentageError
+#               if return_real_prices True - tuple (np.darray, np.darray, pd.DataFrame, np.float64)- 4 elements, 2 are 2D np.darray (predicted_prices, real_prices), 
+#                                             1 pd.DataFrame containing dates of the predicted values, and np.float64 the MeanAbsolutePercentageError
+#     """
+#     n = int(split_frac * hist_prices.shape[0]) 
+#     test_dataset = hist_prices[n-1: ]
+#     test_dataset = test_dataset.reset_index()
+#     dates = test_dataset.iloc[:,[0]]
 
-    # Get necessary datasets for model training
-    prices_train, ti_train, nxt_day_prices_train, prices_test, ti_test, nxt_day_prices_test, price_normalizer = get_train_test_data(hist_prices, split_frac)
+#     # Get necessary datasets for model training
+#     prices_train, ti_train, nxt_day_prices_train, prices_test, ti_test, nxt_day_prices_test, price_normalizer = get_train_test_data(hist_prices, split_frac)
     
-    # Get predictions
-    y_test_predicted = model.predict([prices_test, ti_test])
-    y_test_predicted = price_normalizer.inverse_transform(y_test_predicted)
-    y_test_real = price_normalizer.inverse_transform(prices_test.reshape(prices_test.shape[0], 1))
+#     # Get predictions
+#     y_test_predicted = model.predict([prices_test, ti_test])
+#     y_test_predicted = price_normalizer.inverse_transform(y_test_predicted)
+#     y_test_real = price_normalizer.inverse_transform(prices_test.reshape(prices_test.shape[0], 1))
 
-    # print("RMSE: " +  str(tf.keras.losses.MeanSquaredError()(y_test_real, y_test_predicted)))
-    #real = plt.plot(prices_test_unscaled, label = "Real")
-    # real = plt.plot(y_test_real, label = "Real")
-    # pred = plt.plot(y_test_predicted, label = "Predicted")
-    # plt.legend(["Real", "Predicted"])
-    # plt.show()
-    mape = losses.MeanAbsolutePercentageError()(y_test_real, y_test_predicted).numpy()
+#     # print("RMSE: " +  str(tf.keras.losses.MeanSquaredError()(y_test_real, y_test_predicted)))
+#     #real = plt.plot(prices_test_unscaled, label = "Real")
+#     # real = plt.plot(y_test_real, label = "Real")
+#     # pred = plt.plot(y_test_predicted, label = "Predicted")
+#     # plt.legend(["Real", "Predicted"])
+#     # plt.show()
+#     mape = losses.MeanAbsolutePercentageError()(y_test_real, y_test_predicted).numpy()
     
-    if return_real_prices:
-        return y_test_predicted, y_test_real, dates, mape
-    else:
-        return y_test_predicted, dates, mape
+#     if return_real_prices:
+#         return y_test_predicted, y_test_real, dates, mape
+#     else:
+#         return y_test_predicted, dates, mape
 
-def predict_prices(model, prices_test, days_forward = None):
-    """
-    Function inputs the trained model, historical prices to test on and the technical indictors 
-    Returns the predicted values of prices 
+# def predict_prices(model, prices_test, days_forward = None):
+#     """
+#     Function inputs the trained model, historical prices to test on and the technical indictors 
+#     Returns the predicted values of prices 
     
-    :param model: keras.engine.functional.Functional - The trained LSTM model 
-    :param prices_test: np.array - prices to test on.
-    :param days_forward: int - Default None - returns all predicted prices, else return only the set number of days  
+#     :param model: keras.engine.functional.Functional - The trained LSTM model 
+#     :param prices_test: np.array - prices to test on.
+#     :param days_forward: int - Default None - returns all predicted prices, else return only the set number of days  
     
-    :returns: np.darray - array containing predicted prices. Array is 2D
-    """
+#     :returns: np.darray - array containing predicted prices. Array is 2D
+#     """
     
-    assert len(prices_test) >= 30, "Dataset is not long enough for model to make a prediction"
+#     assert len(prices_test) >= 30, "Dataset is not long enough for model to make a prediction"
     
-    ti = calc_technical_indicators(prices_test)
+#     ti = calc_technical_indicators(prices_test)
     
-    prices = prices_test[prices_test.index >= ti.index[0]] #using absolute prices
-    prices = prices[prices.index >= ti.index[0]] #match shape of our technicals
+#     prices = prices_test[prices_test.index >= ti.index[0]] #using absolute prices
+#     prices = prices[prices.index >= ti.index[0]] #match shape of our technicals
     
     
-    # normalize the price
-    price_normalizer = preprocessing.MinMaxScaler() 
-    prices_normalized = price_normalizer.fit_transform(prices)
+#     # normalize the price
+#     price_normalizer = preprocessing.MinMaxScaler() 
+#     prices_normalized = price_normalizer.fit_transform(prices)
 
-    # normalize technical indicators
-    ti_normalizer = preprocessing.MinMaxScaler()
-    ti_normalized = ti_normalizer.fit_transform(ti)
+#     # normalize technical indicators
+#     ti_normalizer = preprocessing.MinMaxScaler()
+#     ti_normalized = ti_normalizer.fit_transform(ti)
     
-    # reshape our inputs 
-    prices_normalized = prices_normalized.reshape(prices_normalized.shape[0], 1, 1)
-    ti_normalized = ti_normalized.reshape(ti_normalized.shape[0],ti_normalized.shape[1], 1)
+#     # reshape our inputs 
+#     prices_normalized = prices_normalized.reshape(prices_normalized.shape[0], 1, 1)
+#     ti_normalized = ti_normalized.reshape(ti_normalized.shape[0],ti_normalized.shape[1], 1)
     
-    y_test_predicted = model.predict([prices_normalized, ti_normalized])
-    y_test_predicted = price_normalizer.inverse_transform(y_test_predicted)
-    # print(len(y_test_predicted))
-    if isinstance(days_forward,int) and days_forward is not None:
-        if len(y_test_predicted) > days_forward:
-            return y_test_predicted[:days_forward]
-    return y_test_predicted
+#     y_test_predicted = model.predict([prices_normalized, ti_normalized])
+#     y_test_predicted = price_normalizer.inverse_transform(y_test_predicted)
+#     # print(len(y_test_predicted))
+#     if isinstance(days_forward,int) and days_forward is not None:
+#         if len(y_test_predicted) > days_forward:
+#             return y_test_predicted[:days_forward]
+#     return y_test_predicted
 
 
-## Black Litterman Model Functions
-def get_expected_returns_from_lstm(model, hist_prices, ticker, lookback_period = 90, data_frequency = 252, annualize = True, days_forward = None):
-    """
-    Function uses a pre-trained model to predict future prices, and returns the mean return rate of the security 
+# ## Black Litterman Model Functions
+# def get_expected_returns_from_lstm(model, hist_prices, ticker, lookback_period = 90, data_frequency = 252, annualize = True, days_forward = None):
+#     """
+#     Function uses a pre-trained model to predict future prices, and returns the mean return rate of the security 
     
-    :param model: keras.engine.functional.Functional - The trained LSTM model 
-    :param hist_prices: pd.DataFrame - The dataframe containing historical prices
-    :param ticker: str - the ticker of the security as found in hist_prices.columns 
-    :param lookback_period: int - the number of days the model should lookback to predict prices, as in predict_prices() 
-    :param data_frequency: int - the granularity of the hist_prices. (E.g if daily, use default 252, if monthly, use 12)
-    :param annualize: Boolean - Default True to return annualized expected returns. Else return returns of granularity same as hist_prices
-    :param days_forward: int - number of days of prices to predict
+#     :param model: keras.engine.functional.Functional - The trained LSTM model 
+#     :param hist_prices: pd.DataFrame - The dataframe containing historical prices
+#     :param ticker: str - the ticker of the security as found in hist_prices.columns 
+#     :param lookback_period: int - the number of days the model should lookback to predict prices, as in predict_prices() 
+#     :param data_frequency: int - the granularity of the hist_prices. (E.g if daily, use default 252, if monthly, use 12)
+#     :param annualize: Boolean - Default True to return annualized expected returns. Else return returns of granularity same as hist_prices
+#     :param days_forward: int - number of days of prices to predict
     
-    :returns: np.float64 - the expected mean returns. 
-    """
+#     :returns: np.float64 - the expected mean returns. 
+#     """
     
-    assert ticker in hist_prices.columns,  "Ticker not found in hist_prices"
+#     assert ticker in hist_prices.columns,  "Ticker not found in hist_prices"
     
-    expected_prices = predict_prices(model, hist_prices.filter([ticker]).iloc[-lookback_period:], days_forward)
-    expected_returns = get_returns_from_prices(pd.DataFrame(expected_prices), log_prices = True)
-    if annualize:
-        mean_ret = get_annualized_returns(expected_returns, data_frequency).values[0]
-    else:
-        mean_ret = expected_returns.values.mean()
-    return mean_ret
+#     expected_prices = predict_prices(model, hist_prices.filter([ticker]).iloc[-lookback_period:], days_forward)
+#     expected_returns = get_returns_from_prices(pd.DataFrame(expected_prices), log_prices = True)
+#     if annualize:
+#         mean_ret = get_annualized_returns(expected_returns, data_frequency).values[0]
+#     else:
+#         mean_ret = expected_returns.values.mean()
+#     return mean_ret
 
-def get_model_relative_views(ticker_list, 
-                    hist_prices, ticker, lookback_period = 90, data_frequency = 252, annualize = True):
-    """
-    Function computes the expected relative out/under performance of a security compared to a pre-specified list of securities 
+# def get_model_relative_views(ticker_list, 
+#                     hist_prices, ticker, lookback_period = 90, data_frequency = 252, annualize = True):
+#     """
+#     Function computes the expected relative out/under performance of a security compared to a pre-specified list of securities 
     
-    :params ticker_list: np.array list of ticker symbols in string to be compared against 
-    :param hist_prices: pd.DataFrame - The dataframe containing historical prices
-    :param ticker: str - the ticker of the security used as an "anchor" to be compared against, as found in hist_prices.columns 
-    :param lookback_period: int - the number of days the model should lookback to predict prices, as in predict_prices() 
-    :param data_frequency: int - the granularity of the hist_prices. (E.g if daily, use default 252, if monthly, use 12)
-    :param annualize: Boolean - Default True to return annualized expected returns. Else return returns of granularity same as hist_prices
+#     :params ticker_list: np.array list of ticker symbols in string to be compared against 
+#     :param hist_prices: pd.DataFrame - The dataframe containing historical prices
+#     :param ticker: str - the ticker of the security used as an "anchor" to be compared against, as found in hist_prices.columns 
+#     :param lookback_period: int - the number of days the model should lookback to predict prices, as in predict_prices() 
+#     :param data_frequency: int - the granularity of the hist_prices. (E.g if daily, use default 252, if monthly, use 12)
+#     :param annualize: Boolean - Default True to return annualized expected returns. Else return returns of granularity same as hist_prices
     
-    :returns: pd.DataFrame - shape(n, 1) where n is the number of securities in ticker_list. Contains the relative performance. 
-    positive values imply that the anchor outperformed relative to the ticker in the row, and vice versa
-    """
-    rel_expected_ret = pd.DataFrame(columns = [ticker])
-    # set the ticker's expected returns which we will use to compare with
-    ticker_model = models.load_model("lstm_models/f" + ticker + "_lstm_model.h5")
-    ticker_expected_ret = get_expected_returns_from_lstm(ticker_model, hist_prices, ticker, lookback_period, data_frequency, annualize)
-    for i in range(len(ticker_list)):
-        tick = ticker_list[i]
-        # model = model_list[i]
-        model = models.load_model("lstm_models/f" + tick + "_lstm_model.h5")
-        rel_ret = ticker_expected_ret - get_expected_returns_from_lstm(model, hist_prices, tick, lookback_period, data_frequency, annualize) 
-        rel_expected_ret = rel_expected_ret.append({ticker: rel_ret}, ignore_index = True)
+#     :returns: pd.DataFrame - shape(n, 1) where n is the number of securities in ticker_list. Contains the relative performance. 
+#     positive values imply that the anchor outperformed relative to the ticker in the row, and vice versa
+#     """
+#     rel_expected_ret = pd.DataFrame(columns = [ticker])
+#     # set the ticker's expected returns which we will use to compare with
+#     ticker_model = models.load_model("lstm_models/f" + ticker + "_lstm_model.h5")
+#     ticker_expected_ret = get_expected_returns_from_lstm(ticker_model, hist_prices, ticker, lookback_period, data_frequency, annualize)
+#     for i in range(len(ticker_list)):
+#         tick = ticker_list[i]
+#         # model = model_list[i]
+#         model = models.load_model("lstm_models/f" + tick + "_lstm_model.h5")
+#         rel_ret = ticker_expected_ret - get_expected_returns_from_lstm(model, hist_prices, tick, lookback_period, data_frequency, annualize) 
+#         rel_expected_ret = rel_expected_ret.append({ticker: rel_ret}, ignore_index = True)
     
-    rel_expected_ret.index = ticker_list
-    return rel_expected_ret
+#     rel_expected_ret.index = ticker_list
+#     return rel_expected_ret
 
-def get_model_views_matrix(ticker_list, hist_prices, lookback_period = 90, data_frequency = 252, annualize = True):
-    """
-    Function computes the expected relative out/under performance of each security to every other security in the ticker_list
+# def get_model_views_matrix(ticker_list, hist_prices, lookback_period = 90, data_frequency = 252, annualize = True):
+#     """
+#     Function computes the expected relative out/under performance of each security to every other security in the ticker_list
     
-    :params ticker_list: np.array list of ticker symbols in string to be compared against 
-    :param hist_prices: pd.DataFrame - The dataframe containing historical prices
-    :param lookback_period: int - the number of days the model should lookback to predict prices, as in predict_prices() 
-    :param data_frequency: int - the granularity of the hist_prices. (E.g if daily, use default 252, if monthly, use 12)
-    :param annualize: Boolean - Default True to return annualized expected returns. Else return returns of granularity same as hist_prices
+#     :params ticker_list: np.array list of ticker symbols in string to be compared against 
+#     :param hist_prices: pd.DataFrame - The dataframe containing historical prices
+#     :param lookback_period: int - the number of days the model should lookback to predict prices, as in predict_prices() 
+#     :param data_frequency: int - the granularity of the hist_prices. (E.g if daily, use default 252, if monthly, use 12)
+#     :param annualize: Boolean - Default True to return annualized expected returns. Else return returns of granularity same as hist_prices
     
-    :returns: pd.DataFrame - shape(n, n) where n is the number of securities in ticker_list. Contains the relative performance. 
-    positive values imply that the anchor outperformed relative to the ticker in the row, and vice versa
-    """
-    views_matrix = pd.DataFrame
-    i = 0 
-    for ticker in ticker_list:
-        rel_views = get_model_relative_views(ticker_list, 
-                    hist_prices, ticker, lookback_period, data_frequency, annualize)
-        if i == 0:
-            i = 1
-            views_matrix = rel_views
-        else:    
-            views_matrix = views_matrix.merge(rel_views, left_index = True, right_index = True)
+#     :returns: pd.DataFrame - shape(n, n) where n is the number of securities in ticker_list. Contains the relative performance. 
+#     positive values imply that the anchor outperformed relative to the ticker in the row, and vice versa
+#     """
+#     views_matrix = pd.DataFrame
+#     i = 0 
+#     for ticker in ticker_list:
+#         rel_views = get_model_relative_views(ticker_list, 
+#                     hist_prices, ticker, lookback_period, data_frequency, annualize)
+#         if i == 0:
+#             i = 1
+#             views_matrix = rel_views
+#         else:    
+#             views_matrix = views_matrix.merge(rel_views, left_index = True, right_index = True)
         
-    return views_matrix
+#     return views_matrix
 
 def get_model_views_matrix_arc(ticker_list, rel_perf_data):
     """
