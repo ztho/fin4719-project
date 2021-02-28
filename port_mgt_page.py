@@ -23,7 +23,7 @@ def app(tar_stocks):
     # Sidebar https://github.com/antonio-catalano/StockAnalysisApp/blob/master/app.py
     days_sim = st.sidebar.number_input("Number of Simulation Days", value = 30)
     init_cap = st.sidebar.number_input("Initial Capital", value = 1000)
-    rf = st.sidebar.number_input("Risk Free Rate", value  = .0164)
+    rf = st.sidebar.number_input("Risk Free Rate (Annual)", value  = .0164)
     risk_level = st.sidebar.number_input("VaR Significance", value = .05)
 
     u.tar_stocks = st.sidebar.multiselect(label = "Selected Stocks" , options = stock_data.columns)

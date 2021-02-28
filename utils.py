@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd 
 import math
 # import matplotlib.pyplot as plt
-import seaborn as sns
+# import seaborn as sns
 
 from scipy.optimize import minimize 
 import scipy.stats as stats
@@ -639,23 +639,23 @@ def get_sim_results_stats(sim_results):
     output['net_asset_change'] = (sim_results.iloc[len(sim_results) - 1] - sim_results.iloc[0])/sim_results.iloc[0]
     return output
 
-def output_sim_stats(sim_prices):
-    """Function plots the results and gives other statistics"""
-    summary = get_sim_results_stats(sim_prices)
-    max_draw = round((-100* min(summary['max_drawdown'])),2)
-    num_profit = len(summary[summary['is_profitable'] == True])
-    pct_num_profit = round(num_profit/len(summary) * 100, 2)
-    avg_net_asset_change = round(100 * summary["net_asset_change"].mean(), 2)
+# def output_sim_stats(sim_prices):
+#     """Function plots the results and gives other statistics"""
+#     summary = get_sim_results_stats(sim_prices)
+#     max_draw = round((-100* min(summary['max_drawdown'])),2)
+#     num_profit = len(summary[summary['is_profitable'] == True])
+#     pct_num_profit = round(num_profit/len(summary) * 100, 2)
+#     avg_net_asset_change = round(100 * summary["net_asset_change"].mean(), 2)
 
-    print("The max drawdown in the simulation is " + str(max_draw) + "%")
-    print("Number of times it is profitable is " + str(num_profit) + " out of " + str(len(summary)) + " simulations, or " + str(pct_num_profit) + "%") 
-    print("On average, the net asset gain is " + str(avg_net_asset_change) + "%")
-    print("Distribution of ending asset value as below")
+#     print("The max drawdown in the simulation is " + str(max_draw) + "%")
+#     print("Number of times it is profitable is " + str(num_profit) + " out of " + str(len(summary)) + " simulations, or " + str(pct_num_profit) + "%") 
+#     print("On average, the net asset gain is " + str(avg_net_asset_change) + "%")
+#     print("Distribution of ending asset value as below")
     
-    ax = sns.distplot(summary["end_asset_value"])
-    ax.set_title("Distribution of Ending Asset Value")
-    ax.set_ylabel("Frequency")
-    ax.set_xlabel("Ending Asset Value")
+#     ax = sns.distplot(summary["end_asset_value"])
+#     ax.set_title("Distribution of Ending Asset Value")
+#     ax.set_ylabel("Frequency")
+#     ax.set_xlabel("Ending Asset Value")
 
 # Prediction Models
 def calc_var_ratio(data, price, k):
