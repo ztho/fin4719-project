@@ -18,8 +18,8 @@ import user_state as u
 stock_data = data.get_stock_data()
 
 def app(tar_stocks):
-    pval_thres = st.sidebar.number_input("Significance Level", value = .05)
-
+    days_to_look = st.sidebar.number_input("Number Of Days To Lookback", value = 7)
+    
     # For display purposes, no functional purpose
     st.sidebar.markdown("##### Technical Indicators")
     st.sidebar.checkbox("MACD", value = True)
@@ -27,7 +27,7 @@ def app(tar_stocks):
     st.sidebar.checkbox("Arron Oscillator", value = False)
     st.sidebar.checkbox("Bollinger Bands", value = False)
 
-    days_to_look = st.sidebar.number_input("Number Of Days To Lookback", value = 7)
+    pval_thres = st.sidebar.number_input("Significance Level", value = .05)
 
     days_forward = st.sidebar.number_input("Number of Days to Predict", value = 21)
 
