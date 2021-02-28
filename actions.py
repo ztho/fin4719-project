@@ -1,3 +1,7 @@
+####
+# Module to interact with user state
+###
+
 import user_state as u
 
 def add_stock(u, cur_ticker):

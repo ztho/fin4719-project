@@ -1,4 +1,6 @@
-# Module to load data 
+####
+#  Module to load necessary data packages
+####
 import pandas as pd
 import numpy as np 
 from datetime import timedelta

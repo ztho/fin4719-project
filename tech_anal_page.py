@@ -1,25 +1,44 @@
+####
+# Frontend script for technical analysis page
+####
+
 import streamlit as st
+import pandas as pd 
+
+# Import own modules
 import data_loader as data 
 import utils
-# import keras
-import pandas as pd 
 import workers as workers
 import actions
 import user_state as u 
+
+# import removed for static loading. See utils file. 
+# import keras
 
 stock_data = data.get_stock_data()
 
 def app(tar_stocks):
     pval_thres = st.sidebar.number_input("Significance Level", value = .05)
+
+    # For display purposes, no functional purpose
+    st.sidebar.markdown("##### Technical Indicators")
+    st.sidebar.checkbox("MACD", value = True)
+    st.sidebar.checkbox("RSI", value = True)
+
     days_to_look = st.sidebar.number_input("Number Of Days To Lookback", value = 7)
+
     days_forward = st.sidebar.number_input("Number of Days to Predict", value = 21)
+
     u.tar_stocks = st.sidebar.multiselect(label = "Selected Stocks" , options = stock_data.columns)
 
-    days_lookback_pred = 90
+    # days_lookback_pred = 90 (When using dynamic only. See Utils)
 
+    # Top Component
     with st.beta_container():
         st.title("Stock Analysis")
         col1, col2 = st.beta_columns([5,2])
+
+        # Left Column
         with col1:
             ticker = st.selectbox(options = list(stock_data.columns), label = "Ticker")
             df_ticker = stock_data.filter([ticker]).dropna()
@@ -28,7 +47,7 @@ def app(tar_stocks):
             st.bokeh_chart(workers.show_historical_prices_plot(df_ticker))
             # st.line_chart(df_ticker)
 
-            # AI - Prediction - Dynamic
+            # AI - Prediction - Dynamic. See Utils file
             # model = keras.models.load_model("lstm_models/f"+ ticker + "_lstm_model.h5")
             # y_test_pred, y_test_real, dates, mape = utils.test_LSTM_model(model, df_ticker, split_frac = 0.95, return_real_prices = True)
             # pred_prices = utils.predict_prices(model,df_ticker[-days_lookback_pred:], days_forward)
@@ -43,7 +62,7 @@ def app(tar_stocks):
                                                                 dates, .95))
             st.markdown("Percentage Error " + str(round(mape, 3)) + "%")
     
-
+        # Right Column 
         with col2:
             st.markdown("## Historical Statistics")
         
@@ -59,13 +78,15 @@ def app(tar_stocks):
             st.markdown("#### Has Technical Trading Opportunity")
             st.markdown(workers.show_if_random_walk(df_ticker, ticker, [2,4,8,16,32], 2, pval_thres))
 
-
+    # Bottom Component
     with st.beta_container():
         col3, col4 = st.beta_columns([5,2])
+        # Left Column 
         with col3: 
             # st.line_chart(pd.DataFrame({"Real": y_test_real.flatten(), "Predicted": y_test_pred.flatten()}))
             st.markdown("### Predicted Future Prices")
             st.bokeh_chart(workers.show_predicted_prices_plot(pred_prices, df_ticker))
+        # Right Column
         with col4:
             st.markdown("## Projected Statistics")
 

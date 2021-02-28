@@ -1,8 +1,8 @@
-#import all dependencies 
+# Import all dependencies 
 import numpy as np 
 import pandas as pd 
 import math
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import seaborn as sns
 
 from scipy.optimize import minimize 
@@ -10,7 +10,7 @@ import scipy.stats as stats
 from sklearn.covariance import LedoitWolf, ledoit_wolf
 from sklearn.linear_model import LinearRegression
 
-from statsmodels.stats.outliers_influence import variance_inflation_factor
+# from statsmodels.stats.outliers_influence import variance_inflation_factor
 from statsmodels.tools.tools import add_constant
 import statsmodels.api as sm 
 
@@ -19,6 +19,15 @@ from sklearn import preprocessing
 # from keras.layers import Dense, Dropout, LSTM, Input, Activation, concatenate
 # from keras import optimizers, callbacks, losses, models
 # import tensorflow as tf
+
+### NOTE ###
+#         Commented out code are preserved as they are essential functions for
+#         dynamic processing of data. Funnctions commented out use Keras/TensorFlow
+#         which is too expensive to host on a web server. Frontend processes and workers 
+#         use archived/stored static data for better performance 
+############
+
+### To use if deploying Tensorflow on Web ###
 
 # config = tf.compat.v1.ConfigProto( #set not to use gpu
 #         device_count = {'GPU': 0}
@@ -741,8 +750,8 @@ def test_multiple_periods(data, price,  k_list = [2,4,8,16,32] , var_form = 2):
     """
     Function calculates the variance ratio and relevant statistics for a range of k-period values 
     
-    :param data: time series in dataframe
-    :param price: the name of the index in string 
+    :param data: pd.DataFrame - time series in dataframe
+    :param price: str - the name of the index in string 
     :param k_list: list - the list of k-period return value in integer
     :param var_form: specify if homoscedastic (1) or heteroscedastic (2). Default 2 in integer 
     
