@@ -48,6 +48,7 @@ def show_vr_stats(data, price, k_list, var_form, pval_thres = .05):
                                     "vr": "Variance Ratio"})
     
     vr_df = vr_df[["K-Period", "Variance Ratio", "P-Value"]]
+    vr_df = vr_df.convert_dtypes() # get int for k-period
     vr_df = vr_df.style.apply(highlight, pval_thres = pval_thres, axis = 1)
     return vr_df
 
