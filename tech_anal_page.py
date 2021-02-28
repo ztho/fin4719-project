@@ -24,6 +24,8 @@ def app(tar_stocks):
     st.sidebar.markdown("##### Technical Indicators")
     st.sidebar.checkbox("MACD", value = True)
     st.sidebar.checkbox("RSI", value = True)
+    st.sidebar.checkbox("Arron Oscillator", value = False)
+    st.sidebar.checkbox("Bollinger Bands", value = False)
 
     days_to_look = st.sidebar.number_input("Number Of Days To Lookback", value = 7)
 
