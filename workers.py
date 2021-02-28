@@ -357,7 +357,7 @@ def show_portfolio_vols(opt_weights, hist_prices, ticker_list):
 
     :returns: str - formatted historical volatilities
     """
-    if opt_weights is None: return None
+    if opt_weights is None: return "Not Applicable"
     if (len(opt_weights) >= 2):
         hist_ret = get_returns_from_prices(hist_prices.filter(ticker_list))
         covM = get_covariance_matrix(hist_ret)
