@@ -87,7 +87,10 @@ def app(tar_stocks):
         with col3: 
             # st.line_chart(pd.DataFrame({"Real": y_test_real.flatten(), "Predicted": y_test_pred.flatten()}))
             st.markdown("### Predicted Future Prices")
-            st.bokeh_chart(workers.show_predicted_prices_plot(pred_prices, df_ticker))
+            if days_forward > 0:
+                st.bokeh_chart(workers.show_predicted_prices_plot(pred_prices, df_ticker, days_forward))
+            else:
+                st.markdown("No Graph To Display. Number of Days To Predict Must Be More Than 3")
         # Right Column
         with col4:
             st.markdown("## Projected Statistics")

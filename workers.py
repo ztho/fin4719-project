@@ -62,6 +62,7 @@ def show_recent_returns(df_ticker, ticker, num_days):
     
     :returns: str - formatted returns from utils.get_recent_returns()
     """
+    if (num_days <= 2): return "Require More Days, Minimum 3"
     ret = get_recent_returns(df_ticker, ticker, num_days)
     ret_form = str(round(ret * 100, 1)) + "%"
     return ret_form
@@ -105,7 +106,7 @@ def show_historical_prices_plot(df_ticker):
     :returns: Bokeh.line - Bokeh Object containing the plot
     """
     d = df_ticker.index.max()
-    yrs_to_look = 1
+    yrs_to_look = 2
     try:
         d = d.replace(year = d.year - yrs_to_look)
     except ValueError:
@@ -115,23 +116,31 @@ def show_historical_prices_plot(df_ticker):
         df_ticker = df_ticker.loc[df_ticker.index >= d]
     except ValueError:
         df_ticker = df_ticker
+    
     curdoc().theme = "dark_minimal"
-    p = figure(x_axis_type='datetime', height = 250, tools = "reset, save")
+    
+    p = figure(x_axis_type='datetime',
+               height = 250, 
+               tools = "reset, save, wheel_zoom, pan", 
+               toolbar_location = "right")
     p.sizing_mode = "scale_width"
     p.grid.grid_line_alpha = 0
     p.xaxis.axis_label = 'Date'
     p.yaxis.axis_label = 'Price'
     p.yaxis.minor_tick_line_color = None 
-    # p.ygrid.band_fill_color = 'cornflowerblue'
-    # p.ygrid.band_fill_alpha = 0.1
     p.yaxis.formatter = NumeralTickFormatter(format="$0,0")
     
-    p.line(np.array(df_ticker.index, dtype=np.datetime64), df_ticker[df_ticker.columns[0]], line_width = 1.5,color='#7564ff')
+    p.line(np.array(df_ticker.index, dtype=np.datetime64),
+                    df_ticker[df_ticker.columns[0]], 
+                    line_width = 1.5, 
+                    color='#7564ff',
+                    legend_label = df_ticker.columns.values[0] + " Price")
     
     p.add_tools(HoverTool(tooltips=[('Date', '$x{%F}'),
                                     ('Price', '$$y{0,0.00}')],
                         formatters={'$x': 'datetime'},  #using 'datetime' formatter for 'Date' field
                         mode='vline')) #display a tooltip whenever the cursor is vertically in line with a glyph
+    p.legend.location = "top_left"
     return p
 
 def show_model_performance_plot(hist_prices, y_test_pred, y_test_real, dates, split_frac = 0.95): 
@@ -157,14 +166,18 @@ def show_model_performance_plot(hist_prices, y_test_pred, y_test_real, dates, sp
     plot_frame["Date"] = pd.to_datetime(plot_frame['Date'])
 
     source = ColumnDataSource(plot_frame)
-    p = figure(x_axis_type='datetime', height = 200, tools = "reset, save")
+    p = figure(x_axis_type='datetime',
+               height = 200, 
+               tools = "reset, save, wheel_zoom, pan"
+               )
     p.sizing_mode = "scale_width"
+    
     p.grid.grid_line_alpha = 0
     p.yaxis.minor_tick_line_color = None 
     p.yaxis.formatter = NumeralTickFormatter(format="$0,0")
 
-    p.line(x='Date', y='real', line_width=1, source=source, legend_label = 'Real prices',color="#7564ff")
-    p.line(x='Date', y='pred', line_width=1, source=source, legend_label = 'Predicted prices', color = "#1ae0ff")
+    p.line(x='Date', y='real', line_width=1, source=source, legend_label = 'Real Prices',color="#7564ff")
+    p.line(x='Date', y='pred', line_width=1, source=source, legend_label = 'Predicted Prices', color = "#1ae0ff")
     p.yaxis.axis_label = 'Prices'
     
     # hover tool tips 
@@ -178,7 +191,7 @@ def show_model_performance_plot(hist_prices, y_test_pred, y_test_real, dates, sp
     hover.mode = 'vline'
 
     p.add_tools(hover)
-
+    p.legend.location = "top_left"
     return p
 
 
@@ -201,6 +214,8 @@ def show_future_expected_returns(pred_prices, days_forward):
 
     :returns: str - formatted expected returns 
     """
+    if (days_forward <= 2): return "Require At Least 3 Days" # data validation
+
     if days_forward > len(pred_prices):
         days_forward = len(pred_prices)
     prices = pd.DataFrame(pred_prices)
@@ -221,6 +236,8 @@ def show_future_expected_vols(pred_prices, days_forward):
 
     :returns: str - formatted expected volatilities 
     """
+    if (days_forward <= 2): return "Require At Least 3 Day" # data validation
+
     vols = pd.DataFrame(pred_prices)[:days_forward].pct_change().std()[0]
     vols_form = str(round(vols *100, 2)) + "%"
     return vols_form
@@ -235,19 +252,24 @@ def show_num_days_predicted(pred_prices, days_forward):
 
     :returns: str - the number of days predicted
     """
+    if days_forward <= 0: return ""
     if (len(pred_prices) < days_forward):
         return "- " + str(len(pred_prices)) + " Days (Max)" 
     return "- " + str(len(pred_prices)) + " Days"
 
-def show_predicted_prices_plot(pred_prices, hist_data):
+def show_predicted_prices_plot(pred_prices, hist_data, days_forward):
     """
     Function returns Bokeh plot of predicted future prices as returned from utils.predict_prices()
 
-    :param pred_prices: np.array - predicted prices from utils.predict_prices() 
+    :param pred_prices: np.array - predicted prices from utils.predict_prices()
+    :param hist_data: pd.DataFrame - historical stock data 
     :param days_forward: int - number of days forward to project prices 
 
     :returns: Bokeh.line - Bokeh Object with predicted future prices
     """
+
+    if (days_forward <= 0): return None
+
     num_days = len(pred_prices)
     last_day = hist_data.index.max() 
 
@@ -255,19 +277,30 @@ def show_predicted_prices_plot(pred_prices, hist_data):
     dates = [last_day + timedelta(days = i) for i in range(num_days)]
     df_pred_prices.index = dates
 
-    pred_plot = figure(x_axis_type='datetime', height = 200, tools = "")
-    pred_plot.sizing_mode = "scale_width"
-    pred_plot.grid.grid_line_alpha = 0
-    pred_plot.yaxis.minor_tick_line_color = None 
-    pred_plot.yaxis.formatter = NumeralTickFormatter(format="$0,0")
+    p = figure(x_axis_type='datetime', 
+                       height = 200, 
+                       tools = "reset, save, wheel_zoom, pan")
+    p.sizing_mode = "scale_width"
+    p.xaxis.axis_label = 'Date'
+    p.yaxis.axis_label = 'Price'
+    p.grid.grid_line_alpha = 0
+    p.yaxis.minor_tick_line_color = None 
+    p.yaxis.formatter = NumeralTickFormatter(format="$0,0")
     
-    pred_plot.line(np.array(df_pred_prices.index, dtype=np.datetime64), df_pred_prices[df_pred_prices.columns[0]], color='#1ae0ff')
-    
-    pred_plot.add_tools(HoverTool(tooltips=[('Date', '$x{%F}'),
+    p.line(np.array(df_pred_prices.index, dtype=np.datetime64), 
+                   df_pred_prices[df_pred_prices.columns[0]], 
+                   color='#1ae0ff',
+                   legend_label = "Future Predicted Prices")
+    p.legend.location = "top_left"
+
+    hover = HoverTool(tooltips=[('Date', '$x{%F}'),
                                     ('Price', '$$y{0,0.00}')],
                         formatters={'$x': 'datetime'},  #using 'datetime' formatter for 'Date' field
-                        mode='vline')) #display a tooltip whenever the cursor is vertically in line with a glyph
-    return pred_plot
+                        mode = "vline") #display a tooltip whenever the cursor is vertically in line with a glyph
+
+    p.add_tools(hover)
+    
+    return p
 
 
 def exec_get_black_litterman_optimal_weights(ticker_list, hist_prices, rel_perf_data):
@@ -400,6 +433,7 @@ def exec_simulate_gbm(sim, days_sim, init_cap, rf, freq = 252, risk_level =.05):
 
     :returns: (pd.DataFrame, np.float64) - DataFrame of simulation results, VaR value
     """
+    if days_sim <= 1: return None, None
     if sim is not None:
         sigma = sim.pct_change().dropna().values.std()
         # print("Sigma " + str (sigma))
@@ -448,7 +482,7 @@ def show_portfolio_backtest_plot(sim):
 
     :returns: Bokeh.line - the backtested portfolio performance 
     """
-    p = figure(x_axis_type='datetime', height = 200, tools = "reset, save")
+    p = figure(x_axis_type='datetime', height = 200, tools =  "reset, save, wheel_zoom, pan")
     p.grid.grid_line_alpha = 0
     p.xaxis.axis_label = 'Date'
     p.yaxis.axis_label = 'Indicative Value'
@@ -456,13 +490,19 @@ def show_portfolio_backtest_plot(sim):
     p.ygrid.band_fill_alpha = 0
     p.yaxis.formatter = NumeralTickFormatter(format="$0,0") 
     
-    p.line(np.array(sim.index, dtype=np.datetime64), sim['Portfolio Value'], line_width = 2, color='#7564ff')
+    p.line(np.array(sim.index, dtype=np.datetime64), 
+           sim['Portfolio Value'], 
+           line_width = 2, 
+           color='#7564ff',
+           legend_label = "Historical Performance")
     p.sizing_mode = "scale_width"
     p.yaxis.minor_tick_line_color = None 
     p.add_tools(HoverTool(tooltips=[('Date', '$x{%F}'),
                                     ('Price', '$$y{0,0.00}')],
                         formatters={'$x': 'datetime'},  #using 'datetime' formatter for 'Date' field
                         mode='vline')) #display a tooltip whenever the cursor is vertically in line with a glyph
+    
+    p.legend.location = "top_left"
     return p
 
 def show_portfolio_future_plot(gbm_sim, init_cap, days_sim, hist_data):
@@ -499,7 +539,7 @@ def show_portfolio_future_plot(gbm_sim, init_cap, days_sim, hist_data):
         ind_value['dates'] = dates
         source = ColumnDataSource(ind_value)
 
-        plot_proj = figure(x_axis_type='datetime', height = 250, tools = "reset, save")
+        plot_proj = figure(x_axis_type='datetime', height = 250, tools =  "reset, save, wheel_zoom, pan")
         plot_proj.sizing_mode = "scale_width"
         plot_proj.grid.grid_line_alpha = 0
         plot_proj.xaxis.axis_label = 'Date'
@@ -526,5 +566,6 @@ def show_portfolio_future_plot(gbm_sim, init_cap, days_sim, hist_data):
 
         plot_proj.add_tools(hover) 
         
+        plot_proj.legend.location = "top_left"
         return plot_proj 
 

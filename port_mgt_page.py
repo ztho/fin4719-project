@@ -31,7 +31,10 @@ def app(tar_stocks):
     opt_weights = workers.exec_get_black_litterman_optimal_weights(u.tar_stocks, stock_data, rel_perf_data)
     # st.write(opt_weights)
     sim = workers.exec_run_cppi(opt_weights, stock_data,u.tar_stocks, init_cap = init_cap, months_back = 6)
-    sim_gbm, sim_VaR = workers.exec_simulate_gbm(sim, days_sim, init_cap, rf, risk_level = risk_level)
+    sim_gbm, sim_VaR = None, None
+    if days_sim > 0:
+        sim_gbm, sim_VaR = workers.exec_simulate_gbm(sim, days_sim, init_cap, rf, risk_level = risk_level)
+
 
     # Main Display 
     st.title("Portfolio Management")
@@ -69,13 +72,16 @@ def app(tar_stocks):
     
     # Bottom Component
     with st.beta_container():
-        st.markdown("#### Portfolio Projections")
-        col3, col4 = st.beta_columns([4, 1])
+        
+        if sim is not None:
+            st.markdown("#### Portfolio Projections")
+            if days_sim <= 1: st.markdown("Simulation Requires At Least 2 Day")
+            col3, col4 = st.beta_columns([4, 1])
 
-        # Left Column
-        with col3:
-            if sim_gbm is not None:
-                st.bokeh_chart(workers.show_portfolio_future_plot(sim_gbm, init_cap, days_sim, stock_data))
+            # Left Column
+            with col3:
+                if sim_gbm is not None:
+                    st.bokeh_chart(workers.show_portfolio_future_plot(sim_gbm, init_cap, days_sim, stock_data))
            
 
 
