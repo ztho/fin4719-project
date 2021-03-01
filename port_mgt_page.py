@@ -58,10 +58,10 @@ def app(tar_stocks):
         with col2:
             st.markdown("### Portfolio Statistcs")
             
-            st.markdown("#### Historical Returns")
+            st.markdown("#### Portfolio Historical Returns")
             # st.markdown(workers.show_portfolio_returns(opt_weights, stock_data, u.tar_stocks))
             st.markdown(workers.show_portfolio_returns2(sim))
-            st.markdown("#### Historical Volatility")
+            st.markdown("#### Portfolio Historical Volatility")
             st.markdown(workers.show_portfolio_vols(opt_weights, stock_data, u.tar_stocks))
             
             st.markdown("#### Value at Risk, " + str(risk_level * 100) + "%")

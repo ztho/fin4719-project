@@ -106,7 +106,8 @@ def show_historical_prices_plot(df_ticker):
     :returns: Bokeh.line - Bokeh Object containing the plot
     """
     d = df_ticker.index.max()
-    yrs_to_look = 2
+    yrs_to_look = 1
+
     try:
         d = d.replace(year = d.year - yrs_to_look)
     except ValueError:
@@ -377,8 +378,10 @@ def show_portfolio_returns(opt_weights, hist_prices, ticker_list):
 
 def show_portfolio_returns2(sim):
     if sim is not None:
-        rets = sim.pct_change().dropna().values.mean()
-        rets_form = str(round(rets * 100, 5)) + "%"
+        # print(sim.pct_change().dropna())
+        # rets = sim.pct_change().dropna().values.mean()
+        rets = (sim.iloc[-1].values[0] - 1000) / 1000
+        rets_form = str(round(rets * 100, 2)) + "%"
         return rets_form
     else:
         return "Not Applicable"
@@ -454,7 +457,7 @@ def show_formatted_VaR(var_risk):
     :returns: str - formatted VaR
     """
     if var_risk is not None:
-        var_form =  str(round(var_risk * 100, 2)) + "%"
+        var_form =  str(round(-var_risk * 100, 2)) + "%"
         return var_form
     return "Not Applicable"
 
