@@ -9,7 +9,7 @@ from bokeh.plotting import figure
 from PIL import Image
 
 img = Image.open("img/icon.jpg")
-st.set_page_config(page_title = "TechPred",
+st.set_page_config(page_title = "techinvestor.ai",
                    layout = "wide",
                    page_icon = img) # use whole page
 
