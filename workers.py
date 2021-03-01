@@ -434,6 +434,7 @@ def exec_simulate_gbm(sim, days_sim, init_cap, rf, freq = 252, risk_level =.05):
     :returns: (pd.DataFrame, np.float64) - DataFrame of simulation results, VaR value
     """
     if days_sim <= 1: return None, None
+
     if sim is not None:
         sigma = sim.pct_change().dropna().values.std()
         # print("Sigma " + str (sigma))
@@ -441,6 +442,7 @@ def exec_simulate_gbm(sim, days_sim, init_cap, rf, freq = 252, risk_level =.05):
         gbm_res = get_sim_results_stats(sim_gbm)
         var_risk = gbm_res.filter(['net_asset_change']).quantile(risk_level).values[0]
         return sim_gbm, var_risk
+        
     return None, None
 
 def show_formatted_VaR(var_risk):
