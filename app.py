@@ -6,8 +6,12 @@ import utils
 import workers
 import user_state as u
 from bokeh.plotting import figure
+from PIL import Image
 
-st.set_page_config(layout="wide") # use whole page
+img = Image.open("img/icon.jpg")
+st.set_page_config(page_title = "TechPred",
+                   layout = "wide",
+                   page_icon = img) # use whole page
 
 def main():
     PAGES = {"Technical Analysis": app1, "Portfolio Management": app2}
