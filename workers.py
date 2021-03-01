@@ -137,7 +137,7 @@ def show_historical_prices_plot(df_ticker):
                     legend_label = df_ticker.columns.values[0] + " Price")
     
     p.add_tools(HoverTool(tooltips=[('Date', '$x{%F}'),
-                                    ('Price', '$$y{0,0.00}')],
+                                    ('Price', '$@y{0,0.00}')],
                         formatters={'$x': 'datetime'},  #using 'datetime' formatter for 'Date' field
                         mode='vline')) #display a tooltip whenever the cursor is vertically in line with a glyph
     p.legend.location = "top_left"
@@ -184,8 +184,8 @@ def show_model_performance_plot(hist_prices, y_test_pred, y_test_real, dates, sp
     hover = HoverTool(
     tooltips=[
     ("Date", "@Date{%F}"),
-        ("Real Price","@real"),
-    ("Predicted Price","@pred")],
+        ("Real Price","$@real"),
+    ("Predicted Price","$@pred")],
     formatters = {"@Date":"datetime"})
 
     hover.mode = 'vline'
@@ -294,7 +294,7 @@ def show_predicted_prices_plot(pred_prices, hist_data, days_forward):
     p.legend.location = "top_left"
 
     hover = HoverTool(tooltips=[('Date', '$x{%F}'),
-                                    ('Price', '$$y{0,0.00}')],
+                                    ('Price', '$@y{0,0.00}')],
                         formatters={'$x': 'datetime'},  #using 'datetime' formatter for 'Date' field
                         mode = "vline") #display a tooltip whenever the cursor is vertically in line with a glyph
 
@@ -442,7 +442,7 @@ def exec_simulate_gbm(sim, days_sim, init_cap, rf, freq = 252, risk_level =.05):
         gbm_res = get_sim_results_stats(sim_gbm)
         var_risk = gbm_res.filter(['net_asset_change']).quantile(risk_level).values[0]
         return sim_gbm, var_risk
-        
+
     return None, None
 
 def show_formatted_VaR(var_risk):
@@ -500,7 +500,7 @@ def show_portfolio_backtest_plot(sim):
     p.sizing_mode = "scale_width"
     p.yaxis.minor_tick_line_color = None 
     p.add_tools(HoverTool(tooltips=[('Date', '$x{%F}'),
-                                    ('Price', '$$y{0,0.00}')],
+                                    ('Price', '$@y{0,0.00}')],
                         formatters={'$x': 'datetime'},  #using 'datetime' formatter for 'Date' field
                         mode='vline')) #display a tooltip whenever the cursor is vertically in line with a glyph
     
