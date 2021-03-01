@@ -68,10 +68,10 @@ def app(tar_stocks):
         with col2:
             st.markdown("## Historical Statistics")
         
-            st.markdown("#### Past " + str(days_to_look) + " Day Returns")
+            st.markdown("#### Past " + str(days_to_look) + " Day Daily Returns")
             st.markdown(workers.show_recent_returns(df_ticker, ticker, num_days = days_to_look))
             
-            st.markdown("#### Past " + str(days_to_look) + " Day Volatility")
+            st.markdown("#### Past " + str(days_to_look) + " Day Daily Volatility")
             st.markdown(workers.show_recent_vols(df_ticker, ticker, num_days = days_to_look))
             
             st.markdown("#### Variance Ratio")

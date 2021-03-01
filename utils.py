@@ -407,14 +407,14 @@ def get_black_litterman_optimization(hist_prices, covM,
 
     # get the uncerntainty of our views 
     omega = tau * (P @ S @ P.T)
-
+    # omega = tau * np.dot(np.dot(P,S), P.T)
     # calculate expected return
     try:
-        ex1 = np.linalg.inv((np.linalg.inv((tau * S))) + (P.T @ np.linalg.inv(omega) @ P))
-        ex2 = np.linalg.inv(tau * S) @ pi + P.T @ np.linalg.inv(omega) @ Q
+        ex1 = np.linalg.inv((np.linalg.inv((S))) + (P.T @ np.linalg.inv(omega) @ P))
+        ex2 = np.linalg.inv(S) @ pi + P.T @ np.linalg.inv(omega) @ Q
     except:
         return []
-
+        
     mu_bl = ex1 @ ex2 # expected excess return under black litterman
 
     # get envelope portfolio 
