@@ -40,8 +40,8 @@ def app(tar_stocks):
     st.title("Portfolio Management")
 
     # Top Component
-    with st.beta_container():
-        col1, col2 = st.beta_columns([4, 1])
+    with st.container():
+        col1, col2 = st.columns([4, 1])
 
         # Left Column
         with col1:
@@ -71,12 +71,12 @@ def app(tar_stocks):
             st.markdown(workers.show_is_profitable(sim_gbm))
     
     # Bottom Component
-    with st.beta_container():
+    with st.container():
         
         if sim is not None:
             st.markdown("#### Portfolio Projections")
             if days_sim <= 1: st.markdown("Simulation Requires At Least 2 Day")
-            col3, col4 = st.beta_columns([4, 1])
+            col3, col4 = st.columns([4, 1])
 
             # Left Column
             with col3:
