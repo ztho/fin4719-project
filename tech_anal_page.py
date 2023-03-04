@@ -36,9 +36,9 @@ def app(tar_stocks):
     # days_lookback_pred = 90 (When using dynamic only. See Utils)
 
     # Top Component
-    with st.beta_container():
+    with st.container():
         st.title("Stock Analysis")
-        col1, col2 = st.beta_columns([5,2])
+        col1, col2 = st.columns([5,2])
 
         # Left Column
         with col1:
@@ -81,8 +81,8 @@ def app(tar_stocks):
             st.markdown(workers.show_if_random_walk(df_ticker, ticker, [2,4,8,16,32], 2, pval_thres))
 
     # Bottom Component
-    with st.beta_container():
-        col3, col4 = st.beta_columns([5,2])
+    with st.container():
+        col3, col4 = st.columns([5,2])
         # Left Column 
         with col3: 
             # st.line_chart(pd.DataFrame({"Real": y_test_real.flatten(), "Predicted": y_test_pred.flatten()}))
